@@ -1,6 +1,6 @@
 {
-  "name": "@noble/ed25519",
-  "version": "2.0.0",
+  "name": "@coinspace/ed25519",
+  "version": "0.0.1",
   "description": "Fastest 4KB JS implementation of ed25519 EDDSA signatures compliant with RFC8032, FIPS 186-5 & ZIP215",
   "files": [
     "index.js",
