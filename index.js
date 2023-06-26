@@ -243,10 +243,10 @@ const hash2extK = (hashed) => {
     return { head, prefix, scalar, point, pointBytes };
 };
 // RFC8032 5.1.5; getPublicKey async, sync. Hash priv key and extract point.
-const getExtendedPublicKeyAsync = (priv) => sha512a(toU8(priv, 32)).then(hash2extK);
-const getExtendedPublicKey = (priv) => hash2extK(sha512s(toU8(priv, 32)));
-const getPublicKeyAsync = (priv) => getExtendedPublicKeyAsync(priv).then(p => p.pointBytes);
-const getPublicKey = (priv) => getExtendedPublicKey(priv).pointBytes;
+const getExtendedPublicKeyAsync = (priv, privLengthCheck = true) => sha512a(toU8(priv, privLengthCheck ? 32 : undefined)).then(hash2extK);
+const getExtendedPublicKey = (priv, privLengthCheck = true) => hash2extK(sha512s(toU8(priv, privLengthCheck ? 32 : undefined)));
+const getPublicKeyAsync = (priv, privLengthCheck) => getExtendedPublicKeyAsync(priv, privLengthCheck).then(p => p.pointBytes);
+const getPublicKey = (priv, privLengthCheck) => getExtendedPublicKey(priv, privLengthCheck).pointBytes;
 function hashFinish(asynchronous, res) {
     if (asynchronous)
         return sha512a(res.hashable).then(res.finish);
@@ -263,15 +263,15 @@ const _sign = (e, rBytes, msg) => {
     };
     return { hashable, finish };
 };
-const signAsync = async (msg, privKey) => {
+const signAsync = async (msg, privKey, privLengthCheck) => {
     const m = toU8(msg); // RFC8032 5.1.6: sign msg with key async
-    const e = await getExtendedPublicKeyAsync(privKey); // pub,prfx
+    const e = await getExtendedPublicKeyAsync(privKey, privLengthCheck); // pub,prfx
     const rBytes = await sha512a(e.prefix, m); // r = SHA512(dom2(F, C) || prefix || PH(M))
     return hashFinish(true, _sign(e, rBytes, m)); // gen R, k, S, then 64-byte signature
 };
-const sign = (msg, privKey) => {
+const sign = (msg, privKey, privLengthCheck) => {
     const m = toU8(msg); // RFC8032 5.1.6: sign msg with key sync
-    const e = getExtendedPublicKey(privKey); // pub,prfx
+    const e = getExtendedPublicKey(privKey, privLengthCheck); // pub,prfx
     const rBytes = sha512s(e.prefix, m); // r = SHA512(dom2(F, C) || prefix || PH(M))
     return hashFinish(false, _sign(e, rBytes, m)); // gen R, k, S, then 64-byte signature
 };

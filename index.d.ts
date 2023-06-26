@@ -47,10 +47,10 @@ type ExtK = {
     point: Point;
     pointBytes: Bytes;
 };
-declare const getPublicKeyAsync: (priv: Hex) => Promise<Bytes>;
-declare const getPublicKey: (priv: Hex) => Bytes;
-declare const signAsync: (msg: Hex, privKey: Hex) => Promise<Bytes>;
-declare const sign: (msg: Hex, privKey: Hex) => Bytes;
+declare const getPublicKeyAsync: (priv: Hex, privLengthCheck?: boolean) => Promise<Bytes>;
+declare const getPublicKey: (priv: Hex, privLengthCheck?: boolean) => Bytes;
+declare const signAsync: (msg: Hex, privKey: Hex, privLengthCheck?: boolean) => Promise<Bytes>;
+declare const sign: (msg: Hex, privKey: Hex, privLengthCheck?: boolean) => Bytes;
 declare const verifyAsync: (s: Hex, m: Hex, p: Hex, opts?: {
     zip215: boolean;
 }) => Promise<boolean>;
@@ -68,8 +68,8 @@ declare const etc: {
     sha512Sync: Sha512FnSync;
 };
 declare const utils: {
-    getExtendedPublicKeyAsync: (priv: Hex) => Promise<ExtK>;
-    getExtendedPublicKey: (priv: Hex) => ExtK;
+    getExtendedPublicKeyAsync: (priv: Hex, privLengthCheck?: boolean) => Promise<ExtK>;
+    getExtendedPublicKey: (priv: Hex, privLengthCheck?: boolean) => ExtK;
     randomPrivateKey: () => Bytes;
     precompute(w?: number, p?: Point): Point;
 };

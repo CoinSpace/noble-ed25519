@@ -203,11 +203,14 @@ const hash2extK = (hashed: Bytes): ExtK => {            // RFC8032 5.1.5
   return { head, prefix, scalar, point, pointBytes };
 }
 // RFC8032 5.1.5; getPublicKey async, sync. Hash priv key and extract point.
-const getExtendedPublicKeyAsync = (priv: Hex) => sha512a(toU8(priv, 32)).then(hash2extK);
-const getExtendedPublicKey = (priv: Hex) => hash2extK(sha512s(toU8(priv, 32)))
-const getPublicKeyAsync = (priv: Hex): Promise<Bytes> =>
-  getExtendedPublicKeyAsync(priv).then(p => p.pointBytes)
-const getPublicKey = (priv: Hex): Bytes => getExtendedPublicKey(priv).pointBytes;
+const getExtendedPublicKeyAsync = (priv: Hex, privLengthCheck: boolean = true) =>
+  sha512a(toU8(priv, privLengthCheck ? 32 : undefined)).then(hash2extK);
+const getExtendedPublicKey = (priv: Hex, privLengthCheck: boolean = true) =>
+  hash2extK(sha512s(toU8(priv, privLengthCheck ? 32 : undefined)))
+const getPublicKeyAsync = (priv: Hex, privLengthCheck?: boolean): Promise<Bytes> =>
+  getExtendedPublicKeyAsync(priv, privLengthCheck).then(p => p.pointBytes)
+const getPublicKey = (priv: Hex, privLengthCheck?: boolean): Bytes =>
+  getExtendedPublicKey(priv, privLengthCheck).pointBytes;
 type Finishable<T> = {                                  // Reduces logic duplication between
   hashable: Bytes, finish: (hashed: Bytes) => T         // sync & async versions of sign(), verify()
 }                                                       // hashable=start(); finish(hash(hashable));
@@ -228,15 +231,15 @@ const _sign = (e: ExtK, rBytes: Bytes, msg: Bytes): Finishable<Bytes> => { // si
   }
   return { hashable, finish };
 };
-const signAsync = async (msg: Hex, privKey: Hex): Promise<Bytes> => {
+const signAsync = async (msg: Hex, privKey: Hex, privLengthCheck?: boolean): Promise<Bytes> => {
   const m = toU8(msg);                                  // RFC8032 5.1.6: sign msg with key async
-  const e = await getExtendedPublicKeyAsync(privKey);   // pub,prfx
+  const e = await getExtendedPublicKeyAsync(privKey, privLengthCheck);   // pub,prfx
   const rBytes = await sha512a(e.prefix, m);            // r = SHA512(dom2(F, C) || prefix || PH(M))
   return hashFinish(true, _sign(e, rBytes, m));         // gen R, k, S, then 64-byte signature
 };
-const sign = (msg: Hex, privKey: Hex): Bytes => {
+const sign = (msg: Hex, privKey: Hex, privLengthCheck?: boolean): Bytes => {
   const m = toU8(msg);                                  // RFC8032 5.1.6: sign msg with key sync
-  const e = getExtendedPublicKey(privKey);              // pub,prfx
+  const e = getExtendedPublicKey(privKey, privLengthCheck);              // pub,prfx
   const rBytes = sha512s(e.prefix, m);                  // r = SHA512(dom2(F, C) || prefix || PH(M))
   return hashFinish(false, _sign(e, rBytes, m));        // gen R, k, S, then 64-byte signature
 };
